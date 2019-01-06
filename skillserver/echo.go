@@ -5,7 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/mikeflynn/go-alexa/skillserver/dialog"
+	"github.com/novag/go-alexa/skillserver/dialog"
+	"github.com/novag/go-alexa/skillserver/fulfill"
 )
 
 // ConfirmationStatus represents the status of either a dialog or slot confirmation.
@@ -116,6 +117,25 @@ func NewEchoResponse() *EchoResponse {
 	}
 
 	return er
+}
+
+// CanFulFillIntent
+func (r *EchoResponse) CanFulfillIntent(fulfillable fulfill.Type) *EchoResponse {
+	r.Response.CanFulfillIntent = &EchoCanFulfillIntent{
+		CanFulfill:              fulfillable,
+		CanFulfillSlotsResponse: make(map[string]*EchoCanFulfillSlot),
+	}
+
+	return r
+}
+
+func (r *EchoResponse) AddFulfillmentSlot(name string, canUnderstand fulfill.Type, canFulfill fulfill.Type) *EchoResponse {
+	r.Response.CanFulfillIntent.CanFulfillSlotsResponse[name] = &EchoCanFulfillSlot{
+		CanUnderstand: canUnderstand,
+		CanFulfill:    canFulfill,
+	}
+
+	return r
 }
 
 // OutputSpeech will replace any existing text that should be spoken with this new value. If the output
@@ -359,11 +379,23 @@ type EchoResponse struct {
 // This includes things like the text that should be spoken or any cards that should
 // be shown in the Alexa companion app.
 type EchoRespBody struct {
-	OutputSpeech     *EchoRespPayload `json:"outputSpeech,omitempty"`
-	Card             *EchoRespPayload `json:"card,omitempty"`
-	Reprompt         *EchoReprompt    `json:"reprompt,omitempty"` // Pointer so it's dropped if empty in JSON response.
-	ShouldEndSession bool             `json:"shouldEndSession"`
-	Directives       []*EchoDirective `json:"directives,omitempty"`
+	CanFulfillIntent *EchoCanFulfillIntent `json:"canFulfillIntent,omitempty"`
+	OutputSpeech     *EchoRespPayload      `json:"outputSpeech,omitempty"`
+	Card             *EchoRespPayload      `json:"card,omitempty"`
+	Reprompt         *EchoReprompt         `json:"reprompt,omitempty"` // Pointer so it's dropped if empty in JSON response.
+	ShouldEndSession bool                  `json:"shouldEndSession"`
+	Directives       []*EchoDirective      `json:"directives,omitempty"`
+}
+
+// CanFulfillIntentRequest
+type EchoCanFulfillIntent struct {
+	CanFulfill              fulfill.Type                   `json:"canFulfill"`
+	CanFulfillSlotsResponse map[string]*EchoCanFulfillSlot `json:"canFulfillSlotsResponse"`
+}
+
+type EchoCanFulfillSlot struct {
+	CanUnderstand fulfill.Type `json:"canUnderstand"`
+	CanFulfill    fulfill.Type `json:"canFulfill"`
 }
 
 // EchoReprompt contains speech that should be spoken back to the end user to retrieve

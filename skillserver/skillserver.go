@@ -34,6 +34,7 @@ type EchoApplication struct {
 	Handler            func(http.ResponseWriter, *http.Request)
 	OnLaunch           func(*EchoRequest, *EchoResponse)
 	OnIntent           func(*EchoRequest, *EchoResponse)
+	OnCanFulfillIntent func(*EchoRequest, *EchoResponse)
 	OnSessionEnded     func(*EchoRequest, *EchoResponse)
 	OnAudioPlayerState func(*EchoRequest, *EchoResponse)
 }
@@ -141,6 +142,10 @@ func initialize(apps map[string]interface{}, router *mux.Router) {
 				} else if echoReq.GetRequestType() == "IntentRequest" {
 					if app.OnIntent != nil {
 						app.OnIntent(echoReq, echoResp)
+					}
+				} else if echoReq.GetRequestType() == "CanFulfillIntentRequest" {
+					if app.OnCanFulfillIntent != nil {
+						app.OnCanFulfillIntent(echoReq, echoResp)
 					}
 				} else if echoReq.GetRequestType() == "SessionEndedRequest" {
 					if app.OnSessionEnded != nil {
